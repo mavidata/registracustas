@@ -6,12 +6,12 @@ class ExtratorHotelHold:
     def __init__(self):
         self.leitor = easyocr.Reader(["pt"])
     
-    def extrair_texto(self, imagem_custos):
+    def __extrair_texto(self, imagem_custos):
         results = self.leitor.readtext(imagem_custos, detail=0)
         return results
     
-    def extrair_dataframe(self, imagem_custos):
-        textos = self.extrair_texto(imagem_custos)
+    def __extrair_dataframe(self, imagem_custos):
+        textos = self.__extrair_texto(imagem_custos)
         registros = []
 
         for i, token in enumerate(textos):
@@ -37,5 +37,23 @@ class ExtratorHotelHold:
             )
 
         return custos
+
+    def __renomear_dataframe(self, custos):
+
+        custos.rename(columns={"Data": "Data Consumo",
+                                "Cliente": "Nome Colaborador",
+                                "Valor": "Valor",
+                                "Qtd": "Quantidade Itens",
+                                "Item": "Item Consumido"})
+        
+        return custos
+    
+    def executar(self, imagem_custos):
+        resultado = self.__extrair_dataframe(imagem_custos)
+        resultado = self.__renomear_dataframe(resultado)
+        return resultado
+
+
+
     
 
