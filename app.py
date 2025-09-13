@@ -3,7 +3,7 @@ import pandas as pd
 from utils.class_tratamento_excel import ExtratorHotelBravo
 from utils.class_tratamento_imagens import ExtratorHotelHold
 from utils.class_tratamento_pdf import ExtratorHotelBrasilHistoria
-
+from utils.class_google_sheets import HotelMakerGoogleSheets
 
 loading = "https://i.gifer.com/bfR.gif"
 
@@ -60,7 +60,9 @@ if arquivos:
     loading_run.empty()
 
     if lista_dfs:
-        df_final = pd.concat(lista_dfs, ignore_index=True)
+        custos_compilados = pd.concat(lista_dfs, ignore_index=True)
+        sheets = HotelMakerGoogleSheets()
+        sheets.append("Gastos Colaboradores", custos_compilados)
         st.success("Processamento concluído!")
-        st.dataframe(df_final)
+        st.dataframe(custos_compilados)
 
