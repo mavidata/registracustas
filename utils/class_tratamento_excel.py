@@ -6,6 +6,7 @@ class ExtratorHotelBravo:
         pass
 
     def __seleciona_colunas(self, dataframe: DataFrame) -> DataFrame:
+
         dataframe = dataframe[
             [
                 "DATA DA COMPRA",
@@ -35,9 +36,15 @@ class ExtratorHotelBravo:
 
         return dataframe
 
+
     def executar(self, dataframe: DataFrame) -> DataFrame:
         dataframe = self.__seleciona_colunas(dataframe)
         dataframe = self.__nome_colunas(dataframe)
         return dataframe
 
 
+if __name__ == "__main__":
+    arquivo = "assets/files/RegistroGastosHotelBravo.xlsx"
+    execute = ExtratorHotelBravo()
+    df = pd.read_excel(arquivo, header=2)
+    df_final = execute.executar(df)
