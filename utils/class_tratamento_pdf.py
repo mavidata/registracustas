@@ -22,6 +22,9 @@ class ExtratorHotelBrasilHistoria:
         for linha in linhas:
             l = linha.strip()
 
+            if re.search(r"(Descrição|Produto|Quantidade|Comprador|Preço|unitário|Referência)", l, re.IGNORECASE):
+                continue
+
             if re.search(r"\d{2}/\d{2}/\d{4}$", l):
                 partes = l.split()
                 data = partes[-1]

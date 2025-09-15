@@ -32,18 +32,19 @@ class GoogleSheets:
         sheet = client.open_by_key(self.sheet_id)
         worksheet = sheet.worksheet(sheet_name)
 
-        existing_rows = len(worksheet.get_all_values())
+        header = worksheet.row_values(1)
+        dataframe = dataframe[header]
 
-        start_row = existing_rows + 1 if existing_rows > 0 else 1
+        existing_rows = len(worksheet.get_all_values())
+        start_row = existing_rows + 1
 
         set_with_dataframe(
             worksheet,
             dataframe.reset_index(drop=True),
-            include_column_header=(existing_rows == 0),  
+            include_column_header=False,  
             row=start_row,
             col=1
         )
-
 
 class HotelMakerGoogleSheets(GoogleSheets):
     def __init__(self):

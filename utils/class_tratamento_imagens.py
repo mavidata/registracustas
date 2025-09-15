@@ -3,65 +3,64 @@ import easyocr
 import re
 from PIL import Image
 import numpy as np
+from pandas import DataFrame
 
 class ExtratorHotelHold:
     def __init__(self):
         self.leitor = easyocr.Reader(["pt"])
-    
-    def __extrair_texto(self, imagem_custos):
-        if hasattr(imagem_custos, "read"):
-            img = Image.open(imagem_custos).convert("RGB")
+
+    def __extrair_texto(self, imagem_ou_lista):
+        if hasattr(imagem_ou_lista, "read") or isinstance(imagem_ou_lista, str):
+            img = Image.open(imagem_ou_lista).convert("RGB")
             arr = np.array(img)
             return self.leitor.readtext(arr, detail=0)
+        return imagem_ou_lista
 
-        return self.leitor.readtext(imagem_custos, detail=0)
-    
-    def __extrair_dataframe(self, imagem_custos):
-        textos = self.__extrair_texto(imagem_custos)
+    def __extrair_dataframe(self, imagem_ou_lista):
+        textos = self.__extrair_texto(imagem_ou_lista)
+
+        try:
+            idx_inicio = textos.index("Item") + 1
+        except ValueError:
+            idx_inicio = 9  
+
+        dados = textos[idx_inicio:]
+
         registros = []
+        i = 0
+        while i < len(dados):
+            data = dados[i]
+            cliente = dados[i + 1]
+            valor = dados[i + 2]
+            valor = valor.upper().replace("RS", "").replace("R$", "").replace("S", "")
+            valor = valor.replace("O", "0").replace(" ", "")
+            valor = re.sub(r"[^0-9,\.]", "", valor)
+            
+            possivel_qtd = dados[i + 3]
+            if re.match(r"^\d+$", possivel_qtd): 
+                qtd = int(possivel_qtd)
+                item = dados[i + 4] if i + 4 < len(dados) else ""
+                i += 5
+            else:
+                qtd = 1
+                item = possivel_qtd
+                i += 4
 
-        for i, token in enumerate(textos):
-            if re.match(r"\d{2}/\d{2}/\d{4}", token):  
-                try:
-                    data = token
-                    cliente = textos[i+1]
-                    valor = textos[i+2].replace("RS", "R$").replace("O", "0")
-                    qtd = int(textos[i+3]) if textos[i+3].isdigit() else 1
-                    item = textos[i+4]
-                    registros.append([data, cliente, valor, qtd, item])
-                except IndexError:
-                    pass
+            registros.append([data, cliente, valor, qtd, item])
 
-        custos = pd.DataFrame(registros, columns=["Data", "Cliente", "Valor", "Qtd", "Item"])
+        df = pd.DataFrame(registros, columns=[
+            "Data Consumo", "Nome Colaborador", "Valor", "Quantidade Itens", "Item Consumido"
+        ])
 
-        custos["Valor"] = (
-                custos["Valor"]
-                .str.replace("R$", "", regex=False)
-                .str.replace(".", "", regex=False)
-                .str.replace(",", ".", regex=False)
-                .astype(float)
-            )
+        df["Valor"] = (
+            df["Valor"]
+            .str.replace("R\$", "", regex=True)
+            .str.replace(".", "", regex=False)
+            .str.replace(",", ".", regex=False)
+            .astype(float)
+        )
 
-        return custos
+        return df
 
-    def __renomear_dataframe(self, custos):
-
-        custos.rename(columns={"Data": "Data Consumo",
-                                "Cliente": "Nome Colaborador",
-                                "Valor": "Valor",
-                                "Qtd": "Quantidade Itens",
-                                "Item": "Item Consumido"},
-                                    inplace=True
-)
-        
-        return custos
-    
-    def executar(self, imagem_custos):
-        resultado = self.__extrair_dataframe(imagem_custos)
-        resultado_renomeado = self.__renomear_dataframe(resultado)
-        return resultado_renomeado
-
-
-
-    
-
+    def executar(self, imagem_ou_lista):
+        return self.__extrair_dataframe(imagem_ou_lista)
