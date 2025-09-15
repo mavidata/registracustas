@@ -24,3 +24,4 @@ A aplicação segue o seguinte fluxo.
 * **Linguagem:** Python (Streamlit 1.49.1)
 * **Base de Dados:** Sheets
 
+![alt text](assets/images/image.png)
